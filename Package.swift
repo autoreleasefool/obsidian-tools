@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-	name: "obsidian-letterboxd-sync",
+	name: "obsidian-tools",
 	platforms: [
 		.macOS(.v14),
 	],
@@ -13,16 +13,16 @@ let package = Package(
 	],
 	targets: [
 		.executableTarget(
-			name: "obsidian-letterboxd-sync",
+			name: "obsidian-tools",
 			dependencies: [
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				.product(name: "Yams", package: "yams"),
 			]
 		),
 		.testTarget(
-			name: "obsidian-letterboxd-syncTests",
+			name: "obsidian-toolsTests",
 			dependencies: [
-				"obsidian-letterboxd-sync",
+				"obsidian-tools",
 			]
 		)
 	]
