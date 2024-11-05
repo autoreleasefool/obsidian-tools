@@ -1,5 +1,7 @@
 import ArgumentParser
 import Foundation
+import OSLog
+import Yams
 
 extension ObsidianTools.Letterboxd {
 	struct Push: AsyncParsableCommand {
@@ -14,10 +16,45 @@ extension ObsidianTools.Letterboxd {
 		var outputUrl: URL
 
 		mutating func run() async throws {
-			let importer = ObsidianEntryImporter()
-			let files = try await ObsidianFiles(baseDirectory: obsidianArguments.sourceVaultUrl)
-			let obsidianEntries = try await importer.findEntries(in: files)
-			let letterboxdEntries = obsidianEntries.map(LetterboxdEntry.init(obsidianEntry:))
+			var obsidianEntries: [ObsidianMovieEntry] = []
+
+			let decoder = YAMLDecoder()
+			try enumerateDocuments(in: obsidianArguments.sourceVaultUrl) { document in
+				verboseLog("Parsing \(document.url)")
+
+				guard let rawFrontmatter = document.frontmatter,
+							let frontmatter = try? decoder.decode(ObsidianMovieEntry.Frontmatter.self, from: rawFrontmatter) else {
+					verboseLog("Invalid frontmatter \(document.url)")
+					return
+				}
+
+				guard frontmatter.tags.contains("media/movie") else {
+					verboseLog("Document \(document.url) is not a movie")
+					return
+				}
+
+				print("Adding movie metrics from \(document.url)")
+
+				obsidianEntries.append(
+					contentsOf: frontmatter.metrics
+						.sorted(using: KeyPathComparator(\.date))
+						.enumerated()
+						.map { index, metric in
+							ObsidianMovieEntry(
+								title: frontmatter.title ?? document.title,
+								releaseYear: frontmatter.releaseYear,
+								date: metric.date,
+								rating: metric.rating,
+								rewatch: index != 0,
+								letterboxdUri: frontmatter.letterboxdUri
+							)
+						}
+				)
+			}
+
+			let letterboxdEntries = obsidianEntries
+				.sorted(using: KeyPathComparator(\.title))
+				.map(LetterboxdEntry.init(obsidianEntry:))
 
 			var csv = "Title,Year,WatchedDate,Rating,Rewatch\n"
 			for entry in letterboxdEntries {
@@ -26,6 +63,12 @@ extension ObsidianTools.Letterboxd {
 			}
 
 			try csv.write(to: outputUrl, atomically: true, encoding: .utf8)
+		}
+
+		private func verboseLog(_ log: String) {
+			if globalArguments.verbose {
+				print(log)
+			}
 		}
 	}
 }

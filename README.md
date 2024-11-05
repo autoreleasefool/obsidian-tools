@@ -33,13 +33,14 @@ Frontmatter is a YAML document contained within `---` delimiters at the top and 
 The following frontmatter content is valid:
 
 - `tags`: **(Required)** an array of strings, one of which must be `media/movie`. Not sent to letterboxd
-- `metrics`: **(Required)** an array of objects with the following content:
-	- `date`: **(Required)** yyyy-MM-dd formatted watch date
-	- `rating`: **(Required)** 1-10 rating
-	- `tags`: Comma-separated list of tags
-- `title`: Title of the movie. If not specified, title of the document will be used
-- `releaseYear`: Year of released, used for disambiguation
-- `letterboxd-uri`: Letterboxd URI
+- `movie-metrics`: **(Required)** an object with movie details
+	- `title`: Title of the movie. If not specified, title of the document will be used
+	- `year`: Year of release, used for disambiguation
+	- `letterboxd-uri`: Letterboxd URI
+	- `viewings`: **(Required)** an array of objects with the following content:
+		- `date`: **(Required)** yyyy-MM-dd formatted watch date
+		- `rating`: **(Required)** 1-10 rating
+		- `tags`: Comma-separated list of tags
 
 ### Letterboxd Export Format
 
