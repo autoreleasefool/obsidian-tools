@@ -8,6 +8,15 @@ struct LetterboxdEntry {
 	let rewatch: Bool
 	let letterboxdUri: URL?
 
+	init(title: String, releaseYear: Int? = nil, date: Date, rating: Rating, rewatch: Bool, letterboxdUri: URL? = nil) {
+		self.title = title
+		self.releaseYear = releaseYear
+		self.date = date
+		self.rating = rating
+		self.rewatch = rewatch
+		self.letterboxdUri = letterboxdUri
+	}
+
 	init(obsidianEntry: ObsidianMovieEntry) {
 		self.title = obsidianEntry.title
 		self.releaseYear = obsidianEntry.releaseYear

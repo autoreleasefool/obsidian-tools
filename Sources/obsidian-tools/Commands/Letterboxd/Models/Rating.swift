@@ -1,4 +1,4 @@
-enum Rating: Int, Codable {
+enum Rating: Int, Codable, CaseIterable {
 	case zero = 0
 	case one = 1
 	case two = 2
@@ -10,6 +10,14 @@ enum Rating: Int, Codable {
 	case eight = 8
 	case nine = 9
 	case ten = 10
+
+	init?(letterboxdRating: String) {
+		guard let rating = Rating.allCases.first(where: { $0.letterboxdRating == letterboxdRating }) else {
+			return nil
+		}
+
+		self = rating
+	}
 
 	var letterboxdRating: String? {
 		switch self {

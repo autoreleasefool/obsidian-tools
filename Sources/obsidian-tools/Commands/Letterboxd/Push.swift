@@ -1,4 +1,5 @@
 import ArgumentParser
+import SwiftCSV
 import Foundation
 import OSLog
 import Yams
@@ -56,10 +57,10 @@ extension ObsidianTools.Letterboxd {
 				.sorted(using: KeyPathComparator(\.title))
 				.map(LetterboxdEntry.init(obsidianEntry:))
 
-			var csv = "Title,Year,WatchedDate,Rating,Rewatch\n"
+			var csv = "Title,Year,WatchedDate,Rating,Rewatch,Letterboxd URI\n"
 			for entry in letterboxdEntries {
 				guard let rating = entry.rating.letterboxdRating else { continue }
-				csv += "\(entry.title.escapingCommas),\(entry.releaseYear.orEmptyString),\(entry.date.watchDateFormatted),\(rating),\(entry.rewatch)\n"
+				csv += "\(entry.title.escapingCommas),\(entry.releaseYear.orEmptyString),\(entry.date.watchDateFormatted),\(rating),\(entry.rewatch),\(entry.letterboxdUri.orEmptyString)\n"
 			}
 
 			try csv.write(to: outputUrl, atomically: true, encoding: .utf8)
@@ -79,7 +80,7 @@ extension String {
 	}
 }
 
-extension Optional where Wrapped == Int {
+extension Optional {
 	var orEmptyString: String {
 		if let self {
 			"\(self)"

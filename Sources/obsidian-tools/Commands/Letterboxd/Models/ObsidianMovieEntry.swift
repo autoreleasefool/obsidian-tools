@@ -30,10 +30,18 @@ struct ObsidianMovieEntry {
 extension ObsidianMovieEntry {
 	struct Frontmatter: Codable {
 		let title: String?
-		let releaseYear: Int?
+		var releaseYear: Int?
 		let tags: [String]
 		let metrics: [Metric]
-		let letterboxdUri: URL?
+		var letterboxdUri: URL?
+
+		enum CodingKeys: String, CodingKey {
+			case title
+			case releaseYear
+			case tags
+			case metrics
+			case letterboxdUri = "letterboxd-uri"
+		}
 	}
 }
 
