@@ -2,27 +2,31 @@ import Foundation
 
 struct LetterboxdEntry {
 	let title: String
-	let releaseYear: Int?
-	let date: Date
+	let releaseYear: Int
+	let letterboxdUri: URL
 	let rating: Rating
 	let rewatch: Bool
-	let letterboxdUri: URL?
+	let date: Date
 
-	init(title: String, releaseYear: Int? = nil, date: Date, rating: Rating, rewatch: Bool, letterboxdUri: URL? = nil) {
+	init?(data: [String: String]) {
+		guard let title = data["Name"],
+					let releaseYearStr = data["Year"],
+					let releaseYear = Int(releaseYearStr),
+					let letterboxdUriStr = data["Letterboxd URI"],
+					let letterboxdUri = URL(string: letterboxdUriStr),
+					let ratingStr = data["Rating"],
+					let rating = Rating(letterboxdRating: ratingStr),
+					let dateStr = data["Watched Date"],
+					let date = Date.yyyyMMddFormatter.date(from: dateStr),
+					let rewatchStr = data["Rewatch"] else {
+			return nil
+		}
+
 		self.title = title
 		self.releaseYear = releaseYear
-		self.date = date
-		self.rating = rating
-		self.rewatch = rewatch
 		self.letterboxdUri = letterboxdUri
-	}
-
-	init(obsidianEntry: ObsidianMovieEntry) {
-		self.title = obsidianEntry.title
-		self.releaseYear = obsidianEntry.releaseYear
-		self.date = obsidianEntry.date
-		self.rating = obsidianEntry.rating
-		self.rewatch = obsidianEntry.rewatch
-		self.letterboxdUri = obsidianEntry.letterboxdUri
+		self.rating = rating
+		self.date = date
+		self.rewatch = rewatchStr.lowercased() == "yes" || rewatchStr.lowercased() == "true"
 	}
 }

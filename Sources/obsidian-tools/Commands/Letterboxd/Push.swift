@@ -17,47 +17,46 @@ extension ObsidianTools.Letterboxd {
 		var outputUrl: URL
 
 		mutating func run() async throws {
-			var obsidianEntries: [ObsidianMovieEntry] = []
+			var entries: [ObsidianMovieEntry] = []
 
-			let decoder = YAMLDecoder()
 			for document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
-				let documentFrontmatter = try document.frontmatterObject()
-
-				guard documentFrontmatter.isTagged(with: "media/movie") else {
+				guard document.frontmatter.tags.contains("media/movie") else {
 					verboseLog("Document \(document.url) is not a movie entry")
 					continue
 				}
 
 				verboseLog("Adding movie metrics from \(document.url)")
 
-				guard let movieFrontmatter = Obsidian.Document.MovieEntry.Frontmatter.for(document: document) else {
-					verboseLog("Could not parse frontmatter for \(document.url)")
-					continue
-				}
+//				guard let movieFrontmatter = Obsidian.Document.MovieEntry.Frontmatter.for(document: document) else {
+//					verboseLog("Could not parse frontmatter for \(document.url)")
+//					continue
+//				}
 
-				obsidianEntries.append(
-					contentsOf: movieFrontmatter.metrics?
+				entries.append(
+					contentsOf: document.frontmatter.movieMetrics?
 						.sorted(using: KeyPathComparator(\.date))
 						.enumerated()
 						.map { index, metric in
 							ObsidianMovieEntry(
-								title: movieFrontmatter.title ?? document.title,
-								releaseYear: movieFrontmatter.releaseYear,
+								title: document.frontmatter.movieTitle ?? document.title,
+								releaseYear: document.frontmatter.movieReleaseYear,
 								date: metric.date,
 								rating: metric.rating,
 								rewatch: index != 0,
-								letterboxdUri: movieFrontmatter.letterboxdUri
+								letterboxdUri: document.frontmatter.movieLetterboxdUri
 							)
 						} ?? []
 				)
 			}
 
-			let letterboxdEntries = obsidianEntries
-				.sorted(using: KeyPathComparator(\.title))
-				.map(LetterboxdEntry.init(obsidianEntry:))
+			entries.sort(using: KeyPathComparator(\.title))
+
+//			let letterboxdEntries = obsidianEntries
+//				.sorted(using: KeyPathComparator(\.title))
+//				.map(LetterboxdEntry.init(obsidianEntry:))
 
 			var csv = "Title,Year,WatchedDate,Rating,Rewatch,Letterboxd URI\n"
-			for entry in letterboxdEntries {
+			for entry in entries {
 				guard let rating = entry.rating.letterboxdRating else { continue }
 				csv += "\(entry.title.escapingCommas),\(entry.releaseYear.orEmptyString),\(entry.date.watchDateFormatted),\(rating),\(entry.rewatch),\(entry.letterboxdUri.orEmptyString)\n"
 			}

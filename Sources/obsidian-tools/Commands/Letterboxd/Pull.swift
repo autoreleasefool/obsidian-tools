@@ -16,70 +16,44 @@ extension ObsidianTools.Letterboxd {
 		var inputUrl: URL
 
 		mutating func run() async throws {
-			let ratings = try CSV<Named>(url: inputUrl)
-
-			let isVerboseLoggingEnabled = globalArguments.verbose
-			func verboseLog(_ log: String) {
-				if isVerboseLoggingEnabled {
-					print(log)
-				}
-			}
+			let diary = try CSV<Named>(url: inputUrl)
 
 			var letterboxdEntries: [String: [LetterboxdEntry]] = [:]
-			try ratings.enumerateAsDict { rating in
-				guard let dateStr = rating["Watched Date"],
-							let name = rating["Name"],
-							let yearStr = rating["Year"],
-							let letterboxdUriStr = rating["Letterboxd URI"],
-							let ratingStr = rating["Rating"] else {
-					verboseLog("Could not parse row \(rating)")
-					return
+
+			for entry in diary.rows {
+				guard let letterboxdEntry = LetterboxdEntry(data: entry) else {
+					continue
 				}
 
-				guard let date = Date.yyyyMMddFormatter.date(from: dateStr) else {
-					verboseLog("Could not parse date \(dateStr)")
-					return
-				}
-
-				print(letterboxdUriStr)
-
-				letterboxdEntries[name, default: []].append(
-					LetterboxdEntry(
-						title: name,
-						releaseYear: Int(yearStr),
-						date: date,
-						rating: Rating(letterboxdRating: ratingStr) ?? .zero,
-						rewatch: rating["Rewatch"] == "Yes",
-						letterboxdUri: URL(string: letterboxdUriStr)
-					)
-				)
+				letterboxdEntries[letterboxdEntry.title, default: []].append(letterboxdEntry)
 			}
 
 			let encoder = YAMLEncoder()
 			let decoder = YAMLDecoder()
-			try enumerateDocuments(in: obsidianArguments.sourceVaultUrl) { document in
-//				print("\(document.url)")
-//				guard let rawFrontmatter = document.frontmatter,
-//							var frontmatter = try? decoder.decode(Obsidian.Document..Frontmatter.self, from: rawFrontmatter) else {
-//					verboseLog("Invalid frontmatter \(document.url)")
-//					return
-//				}
-//
-//				guard frontmatter.tags?.contains("media/movie") == true else {
-//					verboseLog("Document \(document.url) is not a movie")
-//					return
-//				}
-//
-//				guard let entries = letterboxdEntries[frontmatter.title ?? document.title], let firstEntry = entries.first else {
-//					print("has no entry \(frontmatter.title ?? document.title)")
-//					return
-//				}
-//
-////				frontmatter.releaseYear = firstEntry.releaseYear
-////				frontmatter.letterboxdUri = firstEntry.letterboxdUri
-//				print(frontmatter.letterboxdUri)
 
-//				try document.frontmatter = encoder.encode(frontmatter)
+			for document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
+//				let documentFrontmatter = try document.frontmatterObject()
+//
+//				guard documentFrontmatter.isTagged(with: "media/movie") else {
+//					verboseLog("Document \(document.url) is not a movie entry")
+//					continue
+//				}
+//
+//				guard let movieFrontmatter = Obsidian.Document.MovieEntry.Frontmatter.for(document: document) else {
+//					verboseLog("Could not parse movie frontmatter for \(document.url)")
+//					continue
+//				}
+//
+//				guard let entries = letterboxdEntries[movieFrontmatter.title ?? document.title] else {
+//					verboseLog("No entry for \(document.url)")
+//					continue
+//				}
+			}
+		}
+
+		private func verboseLog(_ log: String) {
+			if globalArguments.verbose {
+				print(log)
 			}
 		}
 	}

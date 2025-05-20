@@ -33,53 +33,36 @@ struct ObsidianMovieEntry {
 	}
 }
 
-extension Obsidian.Document.MovieEntry {
-	struct Frontmatter: Codable {
-		let title: String?
-		let releaseYear: Int?
-		let metrics: [Metric]?
-		let letterboxdUri: URL?
+extension Obsidian.Document.Frontmatter {
+	var movieTitle: String? {
+		get { yaml["title"]?.string }
+		set { yaml["title"] = try? Yams.Node(newValue) }
+	}
 
-		enum CodingKeys: String, CodingKey {
-			case title = "title"
-			case releaseYear = "movie-year"
-			case metrics = "metrics"
-			case letterboxdUri = "letterboxd-uri"
-		}
+	var movieReleaseYear: Int? {
+		get { yaml["movie-year"]?.int }
+		set { yaml["movie-year"] = try? Yams.Node(newValue) }
+	}
 
-		static func `for`(document: Obsidian.Document) -> Self? {
-			guard let rawFrontmatter = document.frontmatter else { return nil }
-			return try? YAMLDecoder().decode(Self.self, from: rawFrontmatter)
-		}
+	var movieMetrics: [ObsidianMovieEntry.Metric]? {
+		get { yaml["metrics"]?.array().compactMap(ObsidianMovieEntry.Metric.init) }
+		set { yaml["metrics"] = try? Yams.Node(newValue) }
+	}
+
+	var movieLetterboxdUri: URL? {
+		get { yaml["letterboxd-uri"]?.url }
+		set { yaml["letterboxd-uri"] = try? Yams.Node(newValue?.absoluteString) }
 	}
 }
 
-extension Obsidian.Document.MovieEntry.Frontmatter {
-	struct Metric: Codable {
-		let date: Date
-		let rating: Rating
+extension ObsidianMovieEntry {
+	struct Metric {
+		var date: Date
+		var rating: Rating
 
-		enum CodingKeys: CodingKey {
-			case date
-			case rating
-		}
-
-		init(from decoder: any Decoder) throws {
-			let container = try decoder.container(keyedBy: CodingKeys.self)
-
-			let dateStr = try container.decode(String.self, forKey: .date)
-			guard let date = Date.yyyyMMddFormatter.date(from: dateStr) else {
-				throw DecodingError.typeMismatch(String.self, .init(codingPath: [], debugDescription: ""))
-			}
-
-			self.date = date
-			self.rating = try container.decode(Rating.self, forKey: .rating)
-		}
-
-		func encode(to encoder: any Encoder) throws {
-			var container = encoder.container(keyedBy: CodingKeys.self)
-			try container.encode(date.watchDateFormatted, forKey: .date)
-			try container.encode(self.rating, forKey: .rating)
+		init?(node: Yams.Node) {
+			self.date = node["date"]?.timestamp ?? Date()
+			self.rating = Rating(rawValue: node["rating"]?.int ?? 0) ?? .zero
 		}
 	}
 }

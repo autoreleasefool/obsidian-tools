@@ -4,12 +4,10 @@ import Yams
 extension Obsidian {
 	struct Document: Equatable {
 		let url: URL
-		private var _frontmatter: String?
-		var frontmatter: String? {
-			get { _frontmatter }
-			set {
-				_frontmatter = newValue
-				_contents = replaceFrontmatter(in: contents, with: newValue)
+
+		var frontmatter: Frontmatter {
+			didSet {
+				_contents = replaceFrontmatter(in: contents, with: frontmatter.yaml.string)
 			}
 		}
 
@@ -18,7 +16,7 @@ extension Obsidian {
 			get { _contents }
 			set {
 				_contents = newValue
-				_frontmatter = extractFrontmatter(from: newValue)
+				frontmatter = Frontmatter(root: extractFrontmatter(from: newValue) ?? .init(""))
 			}
 		}
 
@@ -27,43 +25,50 @@ extension Obsidian {
 			let frontmatter = extractFrontmatter(from: contents)
 
 			self.url = url
-			self._frontmatter = frontmatter
+			self.frontmatter = Frontmatter(root: frontmatter ?? .init(""))
 			self._contents = contents
 		}
 
 		var title: String {
 			url.lastPathComponent.replacingOccurrences(of: ".md", with: "")
 		}
-
-		func frontmatterObject() throws -> Frontmatter {
-			guard let frontmatter else { throw Obsidian.Error.invalidFrontmatter }
-			return try YAMLDecoder().decode(Frontmatter.self, from: frontmatter)
-		}
 	}
 }
 
 extension Obsidian.Document {
-	struct Frontmatter: Codable {
-		let alias: [String]?
-		let tags: [String]?
-		let dateCreated: Date
-		let dateModified: Date
+	struct Frontmatter: Equatable {
+		var yaml: Yams.Node
 
-		enum CodingKeys: String, CodingKey {
-			case alias
-			case tags
-			case dateCreated = "date-created"
-			case dateModified = "last-updated"
+		init(root: Yams.Node) {
+			self.yaml = root
 		}
 
-		func isTagged(with tag: String) -> Bool {
-			tags?.contains(tag) ?? false
+		var tags: [String] {
+			get { yaml["tags"]?.array(of: String.self) ?? [] }
+			set { yaml["tags"] = try? Yams.Node(newValue) }
+		}
+
+		var alias: [String] {
+			get { yaml["alias"]?.array(of: String.self) ?? [] }
+			set { yaml["alias"] = try? Yams.Node(newValue) }
+		}
+
+		var dateCreated: Date {
+			get { yaml["date-created"]?.timestamp ?? Date() }
+			set { yaml["date-created"] = try? Yams.Node(newValue) }
+		}
+
+		var dateModified: Date {
+			get { yaml["last-updated"]?.timestamp ?? Date() }
+			set { yaml["last-updated"] = try? Yams.Node(newValue) }
 		}
 	}
 }
 
+// MARK: Frontmatter Helpers
+
 fileprivate func replaceFrontmatter(in contents: String, with frontmatter: String?) -> String {
-	if let extracted = extractFrontmatter(from: contents) {
+	if let extracted = extractFrontmatter(from: contents)?.string {
 		return contents.replacing(extracted, with: frontmatter ?? "")
 	} else if let frontmatter {
 		return "---\n\(frontmatter)\n---\n\(contents)"
@@ -72,7 +77,7 @@ fileprivate func replaceFrontmatter(in contents: String, with frontmatter: Strin
 	}
 }
 
-fileprivate func extractFrontmatter(from contents: String) -> String? {
+fileprivate func extractFrontmatter(from contents: String) -> Yams.Node? {
 	var didStartFrontmatter = false
 	var frontmatter = ""
 
@@ -90,7 +95,7 @@ fileprivate func extractFrontmatter(from contents: String) -> String? {
 		}
 
 		if line == "---" {
-			return frontmatter
+			return try? Yams.compose(yaml: frontmatter)
 		}
 
 		frontmatter += "\(line)\n"
