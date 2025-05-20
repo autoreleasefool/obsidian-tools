@@ -34,6 +34,31 @@ extension Obsidian {
 		var title: String {
 			url.lastPathComponent.replacingOccurrences(of: ".md", with: "")
 		}
+
+		func frontmatterObject() throws -> Frontmatter {
+			guard let frontmatter else { throw Obsidian.Error.invalidFrontmatter }
+			return try YAMLDecoder().decode(Frontmatter.self, from: frontmatter)
+		}
+	}
+}
+
+extension Obsidian.Document {
+	struct Frontmatter: Codable {
+		let alias: [String]?
+		let tags: [String]?
+		let dateCreated: Date
+		let dateModified: Date
+
+		enum CodingKeys: String, CodingKey {
+			case alias
+			case tags
+			case dateCreated = "date-created"
+			case dateModified = "last-updated"
+		}
+
+		func isTagged(with tag: String) -> Bool {
+			tags?.contains(tag) ?? false
+		}
 	}
 }
 

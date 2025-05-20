@@ -1,5 +1,6 @@
 import Foundation
 
+@available(*, deprecated, renamed: "Obsidian.Value.enumerateDocuments")
 func enumerateDocuments(
 	in vaultUrl: URL,
 	perform: (inout Obsidian.Document) throws -> Void

@@ -1,4 +1,10 @@
 import Foundation
+import Yams
+
+extension Obsidian.Document {
+	struct MovieEntry {
+	}
+}
 
 struct ObsidianMovieEntry {
 	let title: String
@@ -27,25 +33,28 @@ struct ObsidianMovieEntry {
 	}
 }
 
-extension ObsidianMovieEntry {
+extension Obsidian.Document.MovieEntry {
 	struct Frontmatter: Codable {
 		let title: String?
-		var releaseYear: Int?
-		let tags: [String]
-		let metrics: [Metric]
-		var letterboxdUri: URL?
+		let releaseYear: Int?
+		let metrics: [Metric]?
+		let letterboxdUri: URL?
 
 		enum CodingKeys: String, CodingKey {
-			case title
-			case releaseYear
-			case tags
-			case metrics
+			case title = "title"
+			case releaseYear = "movie-year"
+			case metrics = "metrics"
 			case letterboxdUri = "letterboxd-uri"
+		}
+
+		static func `for`(document: Obsidian.Document) -> Self? {
+			guard let rawFrontmatter = document.frontmatter else { return nil }
+			return try? YAMLDecoder().decode(Self.self, from: rawFrontmatter)
 		}
 	}
 }
 
-extension ObsidianMovieEntry.Frontmatter {
+extension Obsidian.Document.MovieEntry.Frontmatter {
 	struct Metric: Codable {
 		let date: Date
 		let rating: Rating

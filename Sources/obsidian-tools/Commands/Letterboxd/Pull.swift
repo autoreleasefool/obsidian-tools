@@ -59,27 +59,27 @@ extension ObsidianTools.Letterboxd {
 			let decoder = YAMLDecoder()
 			try enumerateDocuments(in: obsidianArguments.sourceVaultUrl) { document in
 //				print("\(document.url)")
-				guard let rawFrontmatter = document.frontmatter,
-							var frontmatter = try? decoder.decode(ObsidianMovieEntry.Frontmatter.self, from: rawFrontmatter) else {
-					verboseLog("Invalid frontmatter \(document.url)")
-					return
-				}
+//				guard let rawFrontmatter = document.frontmatter,
+//							var frontmatter = try? decoder.decode(Obsidian.Document..Frontmatter.self, from: rawFrontmatter) else {
+//					verboseLog("Invalid frontmatter \(document.url)")
+//					return
+//				}
+//
+//				guard frontmatter.tags?.contains("media/movie") == true else {
+//					verboseLog("Document \(document.url) is not a movie")
+//					return
+//				}
+//
+//				guard let entries = letterboxdEntries[frontmatter.title ?? document.title], let firstEntry = entries.first else {
+//					print("has no entry \(frontmatter.title ?? document.title)")
+//					return
+//				}
+//
+////				frontmatter.releaseYear = firstEntry.releaseYear
+////				frontmatter.letterboxdUri = firstEntry.letterboxdUri
+//				print(frontmatter.letterboxdUri)
 
-				guard frontmatter.tags.contains("media/movie") else {
-					verboseLog("Document \(document.url) is not a movie")
-					return
-				}
-
-				guard let entries = letterboxdEntries[frontmatter.title ?? document.title], let firstEntry = entries.first else {
-					print("has no entry \(frontmatter.title ?? document.title)")
-					return
-				}
-
-				frontmatter.releaseYear = firstEntry.releaseYear
-				frontmatter.letterboxdUri = firstEntry.letterboxdUri
-				print(frontmatter.letterboxdUri)
-
-				try document.frontmatter = encoder.encode(frontmatter)
+//				try document.frontmatter = encoder.encode(frontmatter)
 			}
 		}
 	}

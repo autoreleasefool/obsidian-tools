@@ -20,36 +20,35 @@ extension ObsidianTools.Letterboxd {
 			var obsidianEntries: [ObsidianMovieEntry] = []
 
 			let decoder = YAMLDecoder()
-			try enumerateDocuments(in: obsidianArguments.sourceVaultUrl) { document in
-				verboseLog("Parsing \(document.url)")
+			for document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
+				let documentFrontmatter = try document.frontmatterObject()
 
-				guard let rawFrontmatter = document.frontmatter,
-							let frontmatter = try? decoder.decode(ObsidianMovieEntry.Frontmatter.self, from: rawFrontmatter) else {
-					verboseLog("Invalid frontmatter \(document.url)")
-					return
+				guard documentFrontmatter.isTagged(with: "media/movie") else {
+					verboseLog("Document \(document.url) is not a movie entry")
+					continue
 				}
 
-				guard frontmatter.tags.contains("media/movie") else {
-					verboseLog("Document \(document.url) is not a movie")
-					return
-				}
+				verboseLog("Adding movie metrics from \(document.url)")
 
-				print("Adding movie metrics from \(document.url)")
+				guard let movieFrontmatter = Obsidian.Document.MovieEntry.Frontmatter.for(document: document) else {
+					verboseLog("Could not parse frontmatter for \(document.url)")
+					continue
+				}
 
 				obsidianEntries.append(
-					contentsOf: frontmatter.metrics
+					contentsOf: movieFrontmatter.metrics?
 						.sorted(using: KeyPathComparator(\.date))
 						.enumerated()
 						.map { index, metric in
 							ObsidianMovieEntry(
-								title: frontmatter.title ?? document.title,
-								releaseYear: frontmatter.releaseYear,
+								title: movieFrontmatter.title ?? document.title,
+								releaseYear: movieFrontmatter.releaseYear,
 								date: metric.date,
 								rating: metric.rating,
 								rewatch: index != 0,
-								letterboxdUri: frontmatter.letterboxdUri
+								letterboxdUri: movieFrontmatter.letterboxdUri
 							)
-						}
+						} ?? []
 				)
 			}
 
