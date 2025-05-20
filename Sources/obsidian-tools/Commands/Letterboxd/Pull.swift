@@ -28,31 +28,36 @@ extension ObsidianTools.Letterboxd {
 				letterboxdEntries[letterboxdEntry.title, default: []].append(letterboxdEntry)
 			}
 
-			let encoder = YAMLEncoder()
-			let decoder = YAMLDecoder()
+			for var document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
+				guard document.frontmatter.tags.contains("media/movie") else {
+					verboseLog("Document \(document.url) is not a movie entry")
+					continue
+				}
 
-			for document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
-//				let documentFrontmatter = try document.frontmatterObject()
-//
-//				guard documentFrontmatter.isTagged(with: "media/movie") else {
-//					verboseLog("Document \(document.url) is not a movie entry")
-//					continue
-//				}
-//
-//				guard let movieFrontmatter = Obsidian.Document.MovieEntry.Frontmatter.for(document: document) else {
-//					verboseLog("Could not parse movie frontmatter for \(document.url)")
-//					continue
-//				}
-//
-//				guard let entries = letterboxdEntries[movieFrontmatter.title ?? document.title] else {
-//					verboseLog("No entry for \(document.url)")
-//					continue
-//				}
+				guard let entries = letterboxdEntries[document.frontmatter.movieTitle ?? document.title],
+							let entry = entries.first else {
+					verboseLog("No entry for \(document.url)")
+					continue
+				}
+
+				print("Adding movie metrics from \(document.url)")
+
+				document.frontmatter.movieTitle = entry.title
+				document.frontmatter.movieReleaseYear = entry.releaseYear
+				document.frontmatter.movieLetterboxdUri = entry.letterboxdUri
+				document.frontmatter.movieMetrics = entries.map {
+					ObsidianMovieEntry.Metric(
+						date: $0.date,
+						rating: $0.rating,
+					)
+				}
+
+				try document.contents.write(to: document.url, atomically: true, encoding: .utf8)
 			}
 		}
 
 		private func verboseLog(_ log: String) {
-			if globalArguments.verbose {
+			if globalArguments.verbose && log.lowercased().contains("hunger") {
 				print(log)
 			}
 		}

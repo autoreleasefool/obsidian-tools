@@ -27,11 +27,6 @@ extension ObsidianTools.Letterboxd {
 
 				verboseLog("Adding movie metrics from \(document.url)")
 
-//				guard let movieFrontmatter = Obsidian.Document.MovieEntry.Frontmatter.for(document: document) else {
-//					verboseLog("Could not parse frontmatter for \(document.url)")
-//					continue
-//				}
-
 				entries.append(
 					contentsOf: document.frontmatter.movieMetrics?
 						.sorted(using: KeyPathComparator(\.date))
@@ -50,10 +45,6 @@ extension ObsidianTools.Letterboxd {
 			}
 
 			entries.sort(using: KeyPathComparator(\.title))
-
-//			let letterboxdEntries = obsidianEntries
-//				.sorted(using: KeyPathComparator(\.title))
-//				.map(LetterboxdEntry.init(obsidianEntry:))
 
 			var csv = "Title,Year,WatchedDate,Rating,Rewatch,Letterboxd URI\n"
 			for entry in entries {

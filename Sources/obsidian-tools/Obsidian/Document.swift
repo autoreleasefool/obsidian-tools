@@ -1,4 +1,5 @@
 import Foundation
+import RegexBuilder
 import Yams
 
 extension Obsidian {
@@ -7,7 +8,7 @@ extension Obsidian {
 
 		var frontmatter: Frontmatter {
 			didSet {
-				_contents = replaceFrontmatter(in: contents, with: frontmatter.yaml.string)
+				_contents = replaceFrontmatter(in: contents, with: try! Yams.serialize(node: frontmatter.yaml))
 			}
 		}
 
@@ -16,7 +17,7 @@ extension Obsidian {
 			get { _contents }
 			set {
 				_contents = newValue
-				frontmatter = Frontmatter(root: extractFrontmatter(from: newValue) ?? .init(""))
+				frontmatter = Frontmatter(root: try! Yams.compose(yaml: extractFrontmatter(from: newValue) ?? "") ?? .init(""))
 			}
 		}
 
@@ -25,7 +26,7 @@ extension Obsidian {
 			let frontmatter = extractFrontmatter(from: contents)
 
 			self.url = url
-			self.frontmatter = Frontmatter(root: frontmatter ?? .init(""))
+			self.frontmatter = Frontmatter(root: try! Yams.compose(yaml: frontmatter ?? "") ?? .init(""))
 			self._contents = contents
 		}
 
@@ -45,39 +46,37 @@ extension Obsidian.Document {
 
 		var tags: [String] {
 			get { yaml["tags"]?.array(of: String.self) ?? [] }
-			set { yaml["tags"] = try? Yams.Node(newValue) }
+			set { yaml["tags"] = try! Yams.Node(newValue) }
 		}
 
 		var alias: [String] {
 			get { yaml["alias"]?.array(of: String.self) ?? [] }
-			set { yaml["alias"] = try? Yams.Node(newValue) }
+			set { yaml["alias"] = try! Yams.Node(newValue) }
 		}
 
 		var dateCreated: Date {
 			get { yaml["date-created"]?.timestamp ?? Date() }
-			set { yaml["date-created"] = try? Yams.Node(newValue) }
+			set { yaml["date-created"] = try! Yams.Node(newValue) }
 		}
 
 		var dateModified: Date {
 			get { yaml["last-updated"]?.timestamp ?? Date() }
-			set { yaml["last-updated"] = try? Yams.Node(newValue) }
+			set { yaml["last-updated"] = try! Yams.Node(newValue) }
 		}
 	}
 }
 
 // MARK: Frontmatter Helpers
 
-fileprivate func replaceFrontmatter(in contents: String, with frontmatter: String?) -> String {
-	if let extracted = extractFrontmatter(from: contents)?.string {
-		return contents.replacing(extracted, with: frontmatter ?? "")
-	} else if let frontmatter {
-		return "---\n\(frontmatter)\n---\n\(contents)"
+fileprivate func replaceFrontmatter(in contents: String, with frontmatter: String) -> String {
+	if let extracted = extractFrontmatter(from: contents)  {
+		return contents.replacing(extracted, with: frontmatter)
 	} else {
-		return contents
+		return "---\n\(frontmatter)\n---\n\(contents)"
 	}
 }
 
-fileprivate func extractFrontmatter(from contents: String) -> Yams.Node? {
+fileprivate func extractFrontmatter(from contents: String) -> String? {
 	var didStartFrontmatter = false
 	var frontmatter = ""
 
@@ -95,7 +94,7 @@ fileprivate func extractFrontmatter(from contents: String) -> Yams.Node? {
 		}
 
 		if line == "---" {
-			return try? Yams.compose(yaml: frontmatter)
+			return frontmatter
 		}
 
 		frontmatter += "\(line)\n"
