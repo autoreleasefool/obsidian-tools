@@ -19,7 +19,7 @@ extension ObsidianTools.Letterboxd {
 		mutating func run() async throws {
 			var entries: [ObsidianMovieEntry] = []
 
-			for document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
+			for var document in Obsidian.Vault.enumerateDocuments(in: obsidianArguments.sourceVaultUrl) {
 				guard document.frontmatter.tags.contains("media/movie") else {
 					verboseLog("Document \(document.url) is not a movie entry")
 					continue
@@ -29,6 +29,7 @@ extension ObsidianTools.Letterboxd {
 
 				entries.append(
 					contentsOf: document.frontmatter.movieMetrics?
+						.filter { !$0.pushedToLetterboxd }
 						.sorted(using: KeyPathComparator(\.date))
 						.enumerated()
 						.map { index, metric in
@@ -42,6 +43,17 @@ extension ObsidianTools.Letterboxd {
 							)
 						} ?? []
 				)
+
+				document.frontmatter.movieMetrics = document.frontmatter.movieMetrics?
+					.map { metric in
+						ObsidianMovieEntry.Metric(
+							date: metric.date,
+							rating: metric.rating,
+							pushedToLetterboxd: true
+						)
+					} ?? []
+
+				try document.contents.write(to: document.url, atomically: true, encoding: .utf8)
 			}
 
 			entries.sort(using: KeyPathComparator(\.title))
@@ -49,7 +61,7 @@ extension ObsidianTools.Letterboxd {
 			var csv = "Title,Year,WatchedDate,Rating,Rewatch,Letterboxd URI\n"
 			for entry in entries {
 				guard let rating = entry.rating.letterboxdRating else { continue }
-				csv += "\(entry.title.escapingCommas),\(entry.releaseYear.orEmptyString),\(entry.date.watchDateFormatted),\(rating),\(entry.rewatch),\(entry.letterboxdUri.orEmptyString)\n"
+				csv += "\(entry.title.escapingCommas),\(entry.releaseYear.orEmptyString),\(entry.date.obsidianDate),\(rating),\(entry.rewatch),\(entry.letterboxdUri.orEmptyString)\n"
 			}
 
 			try csv.write(to: outputUrl, atomically: true, encoding: .utf8)

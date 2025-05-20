@@ -55,13 +55,13 @@ extension Obsidian.Document {
 		}
 
 		var dateCreated: Date {
-			get { yaml["date-created"]?.timestamp ?? Date() }
-			set { yaml["date-created"] = try! Yams.Node(newValue) }
+			get { Date.obsidianDateFormatter.date(from: yaml["date-created"]?.string ?? "") ?? Date() }
+			set { yaml["date-created"] = Yams.Node(newValue.obsidianDate, .init(.str), .singleQuoted) }
 		}
 
 		var dateModified: Date {
-			get { yaml["last-updated"]?.timestamp ?? Date() }
-			set { yaml["last-updated"] = try! Yams.Node(newValue) }
+			get { Date.obsidianDateFormatter.date(from: yaml["last-updated"]?.string ?? "") ?? Date() }
+			set { yaml["last-updated"] = Yams.Node(newValue.obsidianDate, .init(.str), .singleQuoted) }
 		}
 	}
 }

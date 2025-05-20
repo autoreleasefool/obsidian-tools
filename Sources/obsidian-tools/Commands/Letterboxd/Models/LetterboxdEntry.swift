@@ -17,7 +17,7 @@ struct LetterboxdEntry {
 					let ratingStr = data["Rating"],
 					let rating = Rating(letterboxdRating: ratingStr),
 					let dateStr = data["Watched Date"],
-					let date = Date.yyyyMMddFormatter.date(from: dateStr),
+					let date = Date.obsidianDateFormatter.date(from: dateStr),
 					let rewatchStr = data["Rewatch"] else {
 			return nil
 		}

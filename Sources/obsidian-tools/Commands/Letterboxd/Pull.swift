@@ -49,6 +49,7 @@ extension ObsidianTools.Letterboxd {
 					ObsidianMovieEntry.Metric(
 						date: $0.date,
 						rating: $0.rating,
+						pushedToLetterboxd: true
 					)
 				}
 

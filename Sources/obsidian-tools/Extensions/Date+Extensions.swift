@@ -1,13 +1,13 @@
 import Foundation
 
 extension Date {
-	public static let yyyyMMddFormatter: DateFormatter = {
+	public static let obsidianDateFormatter: DateFormatter = {
 		let formatter = DateFormatter()
 		formatter.dateFormat = "yyyy-MM-dd"
 		return formatter
 	}()
 
-	var watchDateFormatted: String {
-		Self.yyyyMMddFormatter.string(from: self)
+	var obsidianDate: String {
+		Self.obsidianDateFormatter.string(from: self)
 	}
 }

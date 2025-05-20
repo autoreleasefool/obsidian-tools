@@ -59,21 +59,25 @@ extension ObsidianMovieEntry {
 	struct Metric: NodeRepresentable {
 		var date: Date
 		var rating: Rating
+		var pushedToLetterboxd: Bool
 
 		init?(node: Yams.Node) {
-			self.date = node["date"]?.timestamp ?? Date()
+			self.date = Date.obsidianDateFormatter.date(from: node["date"]?.string ?? "") ?? Date()
 			self.rating = Rating(rawValue: node["rating"]?.int ?? 0) ?? .zero
+			self.pushedToLetterboxd = node["pushed-to-lbx"]?.bool ?? false
 		}
 
-		init(date: Date, rating: Rating) {
+		init(date: Date, rating: Rating, pushedToLetterboxd: Bool) {
 			self.date = date
 			self.rating = rating
+			self.pushedToLetterboxd = pushedToLetterboxd
 		}
 
 		func represented() throws -> Node {
 			try .init([
-				"date": Yams.Node(date.watchDateFormatted, .init(.str), .singleQuoted),
+				"date": Yams.Node(date.obsidianDate, .init(.str), .singleQuoted),
 				"rating": Yams.Node(rating.rawValue),
+				"pushed-to-lbx": Yams.Node(pushedToLetterboxd)
 			])
 		}
 	}
