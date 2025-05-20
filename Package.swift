@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 
 import PackageDescription
 
@@ -8,9 +8,9 @@ let package = Package(
 		.macOS(.v14),
 	],
 	dependencies: [
-		.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.2"),
-		.package(url: "https://github.com/jpsim/Yams.git", from: "5.1.3"),
-		.package(url: "https://github.com/pointfreeco/swift-concurrency-extras.git", from: "1.2.0"),
+		.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
+		.package(url: "https://github.com/jpsim/Yams.git", from: "6.0.0"),
+		.package(url: "https://github.com/pointfreeco/swift-concurrency-extras.git", from: "1.3.1"),
 		.package(url: "https://github.com/swiftcsv/SwiftCSV", from: "0.10.0"),
 	],
 	targets: [
